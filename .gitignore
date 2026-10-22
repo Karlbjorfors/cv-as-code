@@ -1,0 +1,20 @@
+# Rendered output and private data never belong here
+out/
+private/
+*.local.yml
+*.html
+!templates/*.j2
+
+# Real photos: only the placeholder in examples/ is allowed
+*.jpg
+*.jpeg
+*.png
+*.webp
+!examples/example-cv.png
+
+# PDFs: only the rendered example
+*.pdf
+!examples/example-cv.pdf
+
+__pycache__/
+.venv/

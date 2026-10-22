@@ -1,0 +1,162 @@
+{#- One-page A4 CV. Data: `cv` (cv.yml), `contact` (contact.yml), `photo` (data: URI or none). -#}
+{%- set t = {
+  "sv": {"profile": "Profil", "skills": "Kompetenser", "experience": "Erfarenhet", "projects": "Utvalda projekt",
+         "education": "Utbildning", "volunteer": "Ideellt engagemang"},
+  "en": {"profile": "Profile", "skills": "Skills", "experience": "Experience", "projects": "Selected projects",
+         "education": "Education", "volunteer": "Volunteering"},
+}[cv.lang | default("sv")] -%}
+{%- macro entry(e) %}
+  <div class="entry">
+    <div class="year">{{ e.years }}</div>
+    <div>
+      <div class="role">{% if e.url %}<a href="{{ e.url }}">{{ e.title }}</a>{% else %}{{ e.title }}{% endif %}</div>
+      {%- if e.org %}
+      <div class="sub">{{ e.org }}</div>
+      {%- endif %}
+      {%- if e.bullets %}
+      <ul>
+        {%- for b in e.bullets %}
+        <li>{{ b }}</li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+      {%- if e.desc %}
+      <p class="desc">{{ e.desc }}</p>
+      {%- endif %}
+    </div>
+  </div>
+{%- endmacro -%}
+<!doctype html>
+<html lang="{{ cv.lang | default('sv') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ contact.name }} CV</title>
+<style>
+  @page { size: A4; margin: 8mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    color: #1a1a1a;
+    font-size: 8.4pt;
+    line-height: 1.2;
+    margin: 0;
+  }
+  a { color: inherit; text-decoration: underline; text-decoration-color: #bbb; }
+  header {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  header.no-photo { grid-template-columns: 1fr; }
+  .photo {
+    width: 64px; height: 64px; border-radius: 50%;
+    object-fit: cover; object-position: center 30%;
+  }
+  .kicker {
+    font-size: 7.6pt;
+    letter-spacing: 1.6px;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    margin: 0 0 2px;
+  }
+  h1 { font-size: 18pt; font-weight: 700; margin: 0 0 5px; color: #111; }
+  .contact { font-size: 8.2pt; color: #444; margin: 0; }
+  .contact span:not(:last-child)::after { content: " \00B7 "; color: #999; }
+  section { margin-top: 6px; }
+  h2 {
+    font-size: 9.6pt;
+    font-weight: 700;
+    border-bottom: 1px solid #cfcfcf;
+    padding-bottom: 2px;
+    margin: 0 0 5px;
+    color: #111;
+  }
+  .top-grid { display: grid; grid-template-columns: 1.9fr 1fr; gap: 22px; }
+  .profil p { margin: 0; text-align: justify; }
+  .skills div { margin-bottom: 3.5px; }
+  .skills .bullet { color: #555; margin-right: 3px; }
+  .entry { display: grid; grid-template-columns: 54px 1fr; gap: 10px; margin-bottom: 5px; }
+  .entry .year { color: #8a8a8a; font-size: 8pt; padding-top: 1px; white-space: nowrap; }
+  .entry .role { font-weight: 700; font-size: 9pt; }
+  .entry .sub { color: #777; font-size: 8pt; margin-bottom: 2px; }
+  .entry ul { margin: 1px 0 0; padding-left: 12px; }
+  .entry li { margin-bottom: 1px; }
+  .entry p.desc { margin: 0; }
+  table.edu { width: 100%; border-collapse: collapse; }
+  table.edu td { padding: 1px 0; font-size: 8.3pt; vertical-align: top; }
+  table.edu td.y { color: #8a8a8a; width: 52px; white-space: nowrap; }
+  table.edu td.t { font-weight: 700; }
+  table.edu td.i { color: #777; text-align: right; }
+</style>
+</head>
+<body>
+
+<header{% if not photo %} class="no-photo"{% endif %}>
+  {%- if photo %}
+  <img class="photo" src="{{ photo }}" alt="">
+  {%- endif %}
+  <div>
+    {%- if cv.kicker %}
+    <p class="kicker">{{ cv.kicker }}</p>
+    {%- endif %}
+    <h1>{{ contact.name }}</h1>
+    <p class="contact">
+      <span><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></span>
+      {%- if contact.phone %}
+      <span>{{ contact.phone }}</span>
+      {%- endif %}
+      {%- if contact.location %}
+      <span>{{ contact.location }}</span>
+      {%- endif %}
+      {%- for l in contact.links | default([]) %}
+      <span><a href="{{ l.url }}">{{ l.label }}</a></span>
+      {%- endfor %}
+    </p>
+  </div>
+</header>
+
+<div class="top-grid">
+  <div class="profil">
+    <h2>{{ t.profile }}</h2>
+    <p>{{ cv.profile }}</p>
+  </div>
+  <div class="skills">
+    <h2>{{ t.skills }}</h2>
+    {%- for s in cv.skills %}
+    <div><span class="bullet">○</span><b>{{ s.label }}:</b> {{ s['items'] }}</div>
+    {%- endfor %}
+  </div>
+</div>
+
+{%- for key in ["experience", "projects"] if cv[key] %}
+
+<section>
+  <h2>{{ t[key] }}</h2>
+  {%- for e in cv[key] %}{{ entry(e) }}{% endfor %}
+</section>
+{%- endfor %}
+
+{%- if cv.education %}
+
+<section>
+  <h2>{{ t.education }}</h2>
+  <table class="edu">
+    {%- for e in cv.education %}
+    <tr><td class="y">{{ e.years }}</td><td class="t">{{ e.title }}</td><td class="i">{{ e.org }}</td></tr>
+    {%- endfor %}
+  </table>
+</section>
+{%- endif %}
+
+{%- if cv.volunteer %}
+
+<section>
+  <h2>{{ t.volunteer }}</h2>
+  {%- for e in cv.volunteer %}{{ entry(e) }}{% endfor %}
+</section>
+{%- endif %}
+
+</body>
+</html>

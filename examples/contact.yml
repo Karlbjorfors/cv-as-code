@@ -1,0 +1,13 @@
+# Fictional example person. Your real contact.yml belongs in a private place, not in this repo.
+name: Alex Exempel
+email: alex@example.com            # rendered as a mailto: link
+phone: 070-000 00 00
+location: Malmö
+photo: avatar.svg                  # optional, path relative to this file
+links:                             # display order in the header; every url is checked in the PDF
+  - label: LinkedIn
+    url: https://www.linkedin.com/in/example
+  - label: Portfolio
+    url: https://example.com/
+  - label: Github
+    url: https://github.com/example

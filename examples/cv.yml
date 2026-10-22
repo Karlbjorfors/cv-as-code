@@ -1,0 +1,53 @@
+# Fictional example CV showing every section the template supports.
+lang: sv                           # sv | en (section headings)
+kicker: Systemutveckling · Automatisering · Molndrift
+
+profile: >-
+  Systemutvecklare med bakgrund inom kundservice som bygger interna verktyg och automatiserade
+  flöden. Trivs i gränslandet mellan verksamhet och teknik: tar reda på vad användarna faktiskt
+  behöver, bygger en första version snabbt och gör den sedan stabil, testad och dokumenterad.
+  Använder AI-verktyg dagligen för att gå från idé till fungerande lösning.
+
+skills:
+  - label: Utveckling
+    items: Python, TypeScript, React, SQL, REST-API:er, Git
+  - label: Moln & drift
+    items: Azure, Docker, Linux, CI/CD
+  - label: AI
+    items: LLM-integration, RAG, AI-assisterad utveckling
+  - label: Samverkan
+    items: Behovsanalys, workshops, teknisk kommunikation
+
+experience:
+  - years: 2024–
+    title: Systemutvecklare
+    org: Exempelbolaget AB, Malmö · 2024 – pågående
+    bullets:
+      - Byggde en intern webbportal som ersatte tre Excel-filer för beställningar; handläggningstiden halverades.
+      - Automatiserade rapportering från affärssystemet till en dashboard som uppdateras varje natt.
+      - Införde kodgranskning och automatiska tester i teamets arbetsflöde.
+  - years: 2019–23
+    title: Kundtjänstmedarbetare
+    org: Servicebolaget AB, Lund
+    bullets:
+      - Tog fram rutiner och mallar som minskade antalet återkommande ärenden.
+
+projects:
+  - years: 2025
+    title: Bokningsapp för förening
+    url: https://example.com/projekt
+    desc: Fullstack-app (React + Python-API) för att boka lokaler, med inloggning och e-postpåminnelser.
+
+education:
+  - years: 2023–24
+    title: Systemutvecklare .NET/Python
+    org: Yrkeshögskola, Malmö
+  - years: 2024
+    title: Azure Fundamentals (AZ-900)
+    org: Microsoft
+
+volunteer:
+  - years: 2022–
+    title: Kassör
+    org: Exempelföreningen
+    desc: Ansvarar för föreningens medlemsregister och digitaliserade bokföringen.
