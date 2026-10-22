@@ -51,3 +51,8 @@ volunteer:
     title: Kassör
     org: Exempelföreningen
     desc: Ansvarar för föreningens medlemsregister och digitaliserade bokföringen.
+
+# Optional page 2, "CV som kod": excerpts generated from this file and the template, plus links.
+source_page:
+  repo: https://github.com/Karlbjorfors/cv-as-code
+  # intro: Egen inledningstext (annars används standardtexten för språket)

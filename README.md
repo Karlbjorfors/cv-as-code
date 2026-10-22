@@ -5,7 +5,9 @@ ordbehandlingsprogram. Innehållet ligger i YAML, utseendet i en Jinja/HTML-mall
 och ett Python-script gör en PDF av det med headless Chromium. Sedan kontrollerar scriptet att
 resultatet håller måttet: exakt en sida och klickbara länkar.
 
-![Exempel-CV renderat från examples/](examples/example-cv.png)
+| Sida 1: CV:t | Sida 2: "CV som kod" (valfri) |
+|---|---|
+| ![Exempel-CV, sida 1](examples/example-cv-1.png) | ![Exempel-CV, sida 2](examples/example-cv-2.png) |
 
 Exemplet ovan är en påhittad person ([`examples/`](examples/)). Mitt riktiga CV renderas med
 samma kod, men innehåll, kontaktuppgifter och foto ligger privat och finns inte i det här repot.
@@ -26,11 +28,11 @@ Kräver [uv](https://docs.astral.sh/uv/) och Chromium eller Google Chrome.
 
 ```bash
 uv run render.py --cv examples/cv.yml --contact examples/contact.yml --out out/cv.pdf
-# ok: out/cv.pdf (1 page(s), 4 links verified)
+# ok: out/cv.pdf (2 page(s), 6 links verified)
 ```
 
 `render.py` är ett fristående script med inbyggd beroendedeklaration
-([PEP 723](https://peps.python.org/pep-0723/)). `uv` installerar `jinja2` och `pyyaml` automatiskt
+([PEP 723](https://peps.python.org/pep-0723/)). `uv` installerar `jinja2`, `pyyaml` och `pygments` automatiskt
 i en isolerad miljö, så du behöver ingen virtualenv eller `requirements.txt`.
 
 | Flagga | Betydelse |
@@ -98,6 +100,9 @@ volunteer:                     # samma postformat som experience
   - years: 2022–
     title: Kassör
     desc: ...
+source_page:                   # valfri sida 2, se nedan
+  repo: https://github.com/<du>/cv-as-code
+  intro: ...                   # valfri, annars standardtext för språket
 ```
 
 Alla sektioner utom `profile` och `skills` är valfria och hoppas över om de saknas. Tips: sätt
@@ -131,14 +136,34 @@ utskrift i stället för skärm:
 4. Rendera med `--html` och öppna HTML-filen i webbläsaren för att justera CSS snabbt. Kör sedan
    utan flaggan för att få PDF och kontroller.
 
+## Sida 2: "CV som kod"
+
+Med `source_page:` i `cv.yml` lägger mallen till en andra sida som visar hur just det här CV:t
+skapades:
+
+1. **Data:** ett utdrag ur den `cv.yml` som användes (kicker, två kompetenser och första jobbet
+   med tre punkter). Långa rader kortas med `…` så att de inte radbryts.
+2. **Mall:** makrot `entry()` klipps ut direkt ur mallfilen.
+3. **Rendering och kontroll:** kommandot och den rad scriptet skriver ut när kontrollerna gått
+   igenom.
+4. **Länkar** till repot och till `examples/`, och de kontrolleras också i PDF:en.
+
+Utdragen genereras vid varje rendering från filerna som faktiskt används, så sidan kan aldrig
+visa något annat än det som skapade dokumentet. Kommandot visar bara filnamn, aldrig lokala
+sökvägar, och `contact.yml` visas inte alls. Syntaxfärgningen görs med
+[Pygments](https://pygments.org/) med inbäddade stilar.
+
+Med sida 2 påslagen förväntas PDF:en vara exakt **två** sidor: CV:t måste fortfarande få plats på
+en, och kodsidan på en.
+
 ## Kontroller
 
 Efter utskrift läser `render.py` PDF:en och kontrollerar:
 
 | Kontroll | Hur | Varför |
 |---|---|---|
-| Exakt en sida | Räknar `/Type /Page`-objekt i PDF:en | Rekryterare läser sida ett; en sida två som råkat uppstå ser slarvig ut |
-| Klickbara länkar | Letar efter varje `url` och `mailto:` som `/URI`-annotation | Länkar som bara är text går inte att klicka på i en PDF |
+| Exakt en sida (två med `source_page`) | Räknar `/Type /Page`-objekt i PDF:en | Rekryterare läser sida ett; en sida två som råkat uppstå ser slarvig ut |
+| Klickbara länkar | Letar efter varje `url`, `mailto:` och länkarna på kodsidan som `/URI`-annotation | Länkar som bara är text går inte att klicka på i en PDF |
 
 Kontrollerna läser PDF-bytes direkt och behöver inga extra verktyg. Om något fallerar listas varje
 problem och scriptet avslutas med felkod 1, så det fungerar även i ett automatiserat flöde.
@@ -187,7 +212,7 @@ annons, eftersom bara `cv.yml` skiljer sig.
 | Problem | Lösning |
 |---|---|
 | `no Chromium/Chrome found` | Installera Chromium, eller sätt `CHROME=/sökväg/till/chrome` |
-| `expected 1 page, got 2` | Korta texten, ta bort en punkt eller en äldre post. Rendera med `--html` för att se var det tar slut |
+| `expected 1 page(s), got 2` (eller `2 … got 3`) | Korta texten, ta bort en punkt eller en äldre post. Rendera med `--html` för att se var det tar slut |
 | `link missing or not clickable` | Kontrollera att mallen ritar länken som `<a href=...>` och att URL:en i YAML är exakt samma |
 | `cannot read ... could not find expected ':'` | YAML-syntaxfel. Sätt citattecken runt texten på raden som anges |
 | Fel typsnitt i PDF:en | Mallen använder Arial/Helvetica och faller tillbaka på systemets sans-serif. Installera t.ex. `ttf-liberation` för samma metrik som Arial |

@@ -10,7 +10,7 @@ private/
 *.jpeg
 *.png
 *.webp
-!examples/example-cv.png
+!examples/example-cv-*.png
 
 # PDFs: only the rendered example
 *.pdf

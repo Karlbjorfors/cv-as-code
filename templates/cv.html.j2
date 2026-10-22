@@ -1,9 +1,19 @@
 {#- One-page A4 CV. Data: `cv` (cv.yml), `contact` (contact.yml), `photo` (data: URI or none). -#}
 {%- set t = {
   "sv": {"profile": "Profil", "skills": "Kompetenser", "experience": "Erfarenhet", "projects": "Utvalda projekt",
-         "education": "Utbildning", "volunteer": "Ideellt engagemang"},
+         "education": "Utbildning", "volunteer": "Ideellt engagemang",
+         "source": "CV som kod", "data": "Data", "template": "Mall", "run": "Rendering och kontroll",
+         "intro": "Det här CV:t är inte gjort i ett ordbehandlingsprogram. Innehållet är data i YAML, utseendet en Jinja/HTML-mall med print-CSS, och ett Python-script gör PDF:en med headless Chromium. Efteråt kontrollerar scriptet att CV:t är exakt en sida plus den här sidan, och att alla länkar går att klicka på. Utdragen nedan är hämtade automatiskt från just de filer som skapade det här dokumentet.",
+         "data_note": "utdrag ur", "template_note": "makrot som ritar varje post i Erfarenhet och Projekt",
+         "run_note": "kontrollerna stoppar renderingen om något inte stämmer",
+         "repo": "Källkod", "example": "Exempel med påhittad person"},
   "en": {"profile": "Profile", "skills": "Skills", "experience": "Experience", "projects": "Selected projects",
-         "education": "Education", "volunteer": "Volunteering"},
+         "education": "Education", "volunteer": "Volunteering",
+         "source": "CV as code", "data": "Data", "template": "Template", "run": "Render and validate",
+         "intro": "This CV was not made in a word processor. The content is YAML data, the design is a Jinja/HTML template with print CSS, and a Python script produces the PDF with headless Chromium. Afterwards the script checks that the CV is exactly one page plus this one, and that every link is clickable. The excerpts below are taken automatically from the very files that produced this document.",
+         "data_note": "excerpt from", "template_note": "the macro that draws every Experience and Project entry",
+         "run_note": "the checks stop the render if anything is off",
+         "repo": "Source code", "example": "Example with a fictional person"},
 }[cv.lang | default("sv")] -%}
 {%- macro entry(e) %}
   <div class="entry">
@@ -89,6 +99,20 @@
   table.edu td.y { color: #8a8a8a; width: 52px; white-space: nowrap; }
   table.edu td.t { font-weight: 700; }
   table.edu td.i { color: #777; text-align: right; }
+
+  /* "CV som kod": optional second page */
+  .source-page { break-before: page; }
+  .source-page .intro { margin: 0 0 8px; max-width: 165mm; font-size: 8.8pt; line-height: 1.35; }
+  .source-page h3 { font-size: 8.8pt; margin: 9px 0 3px; color: #111; }
+  .source-page h3 small { font-weight: 400; color: #777; font-size: 8pt; }
+  .source-page .highlight pre {
+    margin: 0; padding: 6px 8px;
+    background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 4px;
+    font: 7.5pt/1.4 "JetBrains Mono", "DejaVu Sans Mono", Consolas, monospace;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .source-page .links { margin-top: 10px; font-size: 8.8pt; }
+  .source-page .links div { margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -155,6 +179,28 @@
 <section>
   <h2>{{ t.volunteer }}</h2>
   {%- for e in cv.volunteer %}{{ entry(e) }}{% endfor %}
+</section>
+{%- endif %}
+
+{%- if source %}
+
+<section class="source-page">
+  <h2>{{ t.source }}</h2>
+  <p class="intro">{{ source.intro or t.intro }}</p>
+
+  <h3>1. {{ t.data }} <small>· {{ t.data_note }} {{ source.cv_file }}</small></h3>
+  {{ source.yaml_html | safe }}
+
+  <h3>2. {{ t.template }} <small>· {{ source.template_file }}: {{ t.template_note }}</small></h3>
+  {{ source.template_html | safe }}
+
+  <h3>3. {{ t.run }} <small>· {{ t.run_note }}</small></h3>
+  {{ source.cmd_html | safe }}
+
+  <div class="links">
+    <div><b>{{ t.repo }}:</b> <a href="{{ source.repo }}">{{ source.repo | replace("https://", "") }}</a></div>
+    <div><b>{{ t.example }}:</b> <a href="{{ source.example }}">{{ source.example | replace("https://", "") }}</a></div>
+  </div>
 </section>
 {%- endif %}
 
