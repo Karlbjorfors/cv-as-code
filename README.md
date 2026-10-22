@@ -18,6 +18,12 @@ samma kod, men innehåll, kontaktuppgifter och foto ligger privat och finns inte
   och utvalda erfarenheter. Mallen och kontaktuppgifterna delas.
 - **AI skriver text, kod gör resten.** En AI-agent kan skriva en anpassad `cv.yml`, men den ska inte
   "rita" PDF:er. Layout, rendering och kontroller är deterministisk kod som alltid ger samma resultat.
+- **Färre tokens.** AI:n skriver bara innehållet. För ett riktigt CV i det här formatet är
+  `cv.yml` cirka 5 kB (~1 500 tokens), mot cirka 20 kB (~6 000 tokens) för motsvarande färdiga
+  HTML. Ett foto som base64 skulle ensamt kosta tiotusentals tokens om AI:n hanterade det.
+  Ändringar blir en redigering i YAML i stället för en omskrivning av hela dokumentet. Om något är
+  fel säger scriptet exakt vad, så AI:n behöver inte granska en bild av PDF:en för att hitta felet.
+  Mall, rendering, kodsida och kontroller är återanvändbar kod och kostar inga tokens alls.
 - **Kontroller i stället för att hoppas.** Ett CV som råkat bli två sidor, eller där
   LinkedIn-länken bara är text, stoppas innan det skickas.
 - **Versionshanterat.** Varje ändring syns i Git, och gamla CV:n kan återskapas exakt.
