@@ -1,0 +1,51 @@
+{#- Shared header (photo, name, contact row) for cv.html.j2 and letter.html.j2. -#}
+{%- macro header_css() %}
+  header {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  header.no-photo { grid-template-columns: 1fr; }
+  .photo {
+    width: 64px; height: 64px; border-radius: 50%;
+    object-fit: cover; object-position: center 30%;
+  }
+  .kicker {
+    font-size: 7.6pt;
+    letter-spacing: 1.6px;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    margin: 0 0 2px;
+  }
+  h1 { font-size: 18pt; font-weight: 700; margin: 0 0 5px; color: #111; line-height: 1.2; }
+  .contact { font-size: 8.2pt; color: #444; margin: 0; line-height: 1.2; }
+  .contact span:not(:last-child)::after { content: " \00B7 "; color: #999; }
+{%- endmacro %}
+
+{%- macro header(contact, photo, kicker=none) %}
+<header{% if not photo %} class="no-photo"{% endif %}>
+  {%- if photo %}
+  <img class="photo" src="{{ photo }}" alt="">
+  {%- endif %}
+  <div>
+    {%- if kicker %}
+    <p class="kicker">{{ kicker }}</p>
+    {%- endif %}
+    <h1>{{ contact.name }}</h1>
+    <p class="contact">
+      <span><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></span>
+      {%- if contact.phone %}
+      <span>{{ contact.phone }}</span>
+      {%- endif %}
+      {%- if contact.location %}
+      <span>{{ contact.location }}</span>
+      {%- endif %}
+      {%- for l in contact.links | default([]) %}
+      <span><a href="{{ l.url }}">{{ l.label }}</a></span>
+      {%- endfor %}
+    </p>
+  </div>
+</header>
+{%- endmacro %}

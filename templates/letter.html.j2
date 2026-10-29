@@ -1,0 +1,42 @@
+{#- One-page A4 cover letter. Data: `letter` (letter.md), `contact` (contact.yml), `photo` (data: URI or none). -#}
+{%- import "_header.html.j2" as hdr -%}
+<!doctype html>
+<html lang="{{ letter.lang | default('sv') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ contact.name }} {{ "Cover letter" if letter.lang == "en" else "Personligt brev" }}</title>
+<style>
+  @page { size: A4; margin: 14mm 22mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  a { color: inherit; text-decoration: underline; text-decoration-color: #bbb; }
+{{- hdr.header_css() }}
+  header { border-bottom: 1px solid #cfcfcf; padding-bottom: 10px; margin-bottom: 18px; }
+  .meta { display: flex; justify-content: space-between; gap: 16px; font-size: 9pt; color: #666; margin-bottom: 14px; }
+  .meta b { color: #111; }
+  p { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+
+{{ hdr.header(contact, photo, letter.kicker) }}
+
+{%- if letter.subject or letter.date %}
+
+<div class="meta">
+  <span><b>{{ letter.subject }}</b></span>
+  <span>{{ letter.date }}</span>
+</div>
+{%- endif %}
+{%- for para in letter.paragraphs %}
+<p>{% for line in para %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+{%- endfor %}
+
+</body>
+</html>

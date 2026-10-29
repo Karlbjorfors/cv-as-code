@@ -3,7 +3,8 @@
 Ett CV som byggs från **data + mall + kod** i stället för att redigeras för hand i ett
 ordbehandlingsprogram. Innehållet ligger i YAML, utseendet i en Jinja/HTML-mall med print-CSS,
 och ett Python-script gör en PDF av det med headless Chromium. Sedan kontrollerar scriptet att
-resultatet håller måttet: exakt en sida och klickbara länkar.
+resultatet håller måttet: exakt en sida och klickbara länkar. Samma motor gör även
+[personliga brev](#personligt-brev) med samma sidhuvud.
 
 | Sida 1: CV:t | Sida 2: "CV som kod" (valfri) |
 |---|---|
@@ -35,6 +36,9 @@ Kräver [uv](https://docs.astral.sh/uv/) och Chromium eller Google Chrome.
 ```bash
 uv run render.py --cv examples/cv.yml --contact examples/contact.yml --out out/cv.pdf
 # ok: out/cv.pdf (2 page(s), 6 links verified)
+
+uv run render.py --letter examples/letter.md --contact examples/contact.yml --out out/letter.pdf
+# ok: out/letter.pdf (1 page(s), 4 links verified)
 ```
 
 `render.py` är ett fristående script med inbyggd beroendedeklaration
@@ -44,10 +48,11 @@ i en isolerad miljö, så du behöver ingen virtualenv eller `requirements.txt`.
 | Flagga | Betydelse |
 |---|---|
 | `--cv FIL` | CV-innehållet (`cv.yml`) |
+| `--letter FIL` | Ett personligt brev (`letter.md`) i stället för ett CV |
 | `--contact FIL` | Kontaktuppgifter (`contact.yml`) |
 | `--out FIL` | Var PDF:en hamnar |
 | `--photo FIL` | Porträtt (jpg/png/svg). Går före `photo:` i `contact.yml` |
-| `--template FIL` | Annan mall än `templates/cv.html.j2` |
+| `--template FIL` | Annan mall än `templates/cv.html.j2` (eller `letter.html.j2` med `--letter`) |
 | `--html` | Spara även den renderade HTML:en bredvid PDF:en (bra för felsökning) |
 | `--allow-multipage` | Stäng av kravet på en sida |
 
@@ -162,13 +167,43 @@ sökvägar, och `contact.yml` visas inte alls. Syntaxfärgningen görs med
 Med sida 2 påslagen förväntas PDF:en vara exakt **två** sidor: CV:t måste fortfarande få plats på
 en, och kodsidan på en.
 
+## Personligt brev
+
+Med `--letter` i stället för `--cv` blir det ett brev på en sida med samma sidhuvud som CV:t:
+foto, namn och klickbara kontaktlänkar. Brevet är vanlig text, så det är lätt att skriva och
+redigera, både för en människa och en AI:
+
+```markdown
+---
+subject: "Ansökan: Systemutvecklare, Exempelkommunen"   # valfritt, visas fetstilt ovanför texten
+date: Malmö, 1 januari 2026                             # valfritt, visas till höger
+lang: sv                                                # valfritt (sv | en)
+---
+Hej!
+
+Varje stycke skiljs åt med en tom rad.
+En enkel radbrytning behålls, som i hälsningsfrasen nedan.
+
+Vänliga hälsningar
+Alex Exempel
+```
+
+Frontmatter (mellan `---`) är valfritt. Texten escapas, så HTML i brevet visas som text och kan
+inte ändra layouten. Samma kontroller gäller: exakt en sida och alla kontaktlänkar klickbara.
+Sidhuvudet ligger i `templates/_header.html.j2` och delas av båda mallarna, så CV och brev alltid
+ser ut att höra ihop.
+
+[Exempelbrevet som PDF](examples/example-letter.pdf):
+
+<img src="examples/example-letter.png" alt="Exempel på personligt brev" width="420">
+
 ## Kontroller
 
 Efter utskrift läser `render.py` PDF:en och kontrollerar:
 
 | Kontroll | Hur | Varför |
 |---|---|---|
-| Exakt en sida (två med `source_page`) | Räknar `/Type /Page`-objekt i PDF:en | Rekryterare läser sida ett; en sida två som råkat uppstå ser slarvig ut |
+| Exakt en sida (två med `source_page`, alltid en för brev) | Räknar `/Type /Page`-objekt i PDF:en | Rekryterare läser sida ett; en sida två som råkat uppstå ser slarvig ut |
 | Klickbara länkar | Letar efter varje `url`, `mailto:` och länkarna på kodsidan som `/URI`-annotation | Länkar som bara är text går inte att klicka på i en PDF |
 
 Kontrollerna läser PDF-bytes direkt och behöver inga extra verktyg. Om något fallerar listas varje
@@ -218,8 +253,9 @@ annons, eftersom bara `cv.yml` skiljer sig.
 | Problem | Lösning |
 |---|---|
 | `no Chromium/Chrome found` | Installera Chromium, eller sätt `CHROME=/sökväg/till/chrome` |
-| `expected 1 page(s), got 2` (eller `2 … got 3`) | Korta texten, ta bort en punkt eller en äldre post. Rendera med `--html` för att se var det tar slut |
+| `expected 1 page(s), got 2` (eller `2 … got 3`) | Korta texten, ta bort en punkt, en äldre post eller ett stycke i brevet. Rendera med `--html` för att se var det tar slut |
 | `link missing or not clickable` | Kontrollera att mallen ritar länken som `<a href=...>` och att URL:en i YAML är exakt samma |
+| `has no text` | Brevfilen är tom, eller innehåller bara frontmatter |
 | `cannot read ... could not find expected ':'` | YAML-syntaxfel. Sätt citattecken runt texten på raden som anges |
 | Fel typsnitt i PDF:en | Mallen använder Arial/Helvetica och faller tillbaka på systemets sans-serif. Installera t.ex. `ttf-liberation` för samma metrik som Arial |
 

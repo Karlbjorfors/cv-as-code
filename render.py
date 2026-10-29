@@ -3,15 +3,19 @@
 # requires-python = ">=3.11"
 # dependencies = ["jinja2>=3.1", "pyyaml>=6", "pygments>=2.17"]
 # ///
-"""Render a one-page CV PDF from YAML data with a Jinja HTML template and headless Chromium.
+"""Render a one-page CV or cover letter PDF with a Jinja HTML template and headless Chromium.
 
     uv run render.py --cv examples/cv.yml --contact examples/contact.yml --out out/cv.pdf
+    uv run render.py --letter examples/letter.md --contact examples/contact.yml --out out/letter.pdf
+
+A letter is plain text with paragraphs separated by blank lines, and optional YAML frontmatter
+(subject, date, lang, kicker). It gets the same header as the CV.
 
 With `source_page:` in cv.yml, a second page "CV som kod" is added. It shows excerpts taken
 from the very files used for this render (cv.yml + template) and links to the repo.
 
 The PDF is validated after rendering. Exit code is non-zero if:
-  - the CV is not exactly one page, plus one for the source page (unless --allow-multipage), or
+  - the document is not exactly one page, plus one for the CV source page (unless --allow-multipage), or
   - any contact link, the mailto: link or a source-page link is missing as a clickable /URI.
 """
 from __future__ import annotations
@@ -46,6 +50,27 @@ def load_yaml(path: Path) -> dict:
     if not isinstance(data, dict):
         sys.exit(f"error: {path} must contain a YAML mapping")
     return data
+
+
+def load_letter(path: Path) -> dict:
+    """Optional `---` YAML frontmatter, then paragraphs separated by blank lines."""
+    try:
+        text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    except OSError as e:
+        sys.exit(f"error: cannot read {path}:\n{e}")
+    meta = {}
+    if m := re.match(r"---\n(.*?)\n---\n", text, re.S):
+        try:
+            meta = yaml.safe_load(m.group(1)) or {}
+        except yaml.YAMLError as e:
+            sys.exit(f"error: bad frontmatter in {path}:\n{e}")
+        if not isinstance(meta, dict):
+            sys.exit(f"error: frontmatter in {path} must be a YAML mapping")
+        text = text[m.end():]
+    paragraphs = [p.strip().splitlines() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    if not paragraphs:
+        sys.exit(f"error: {path} has no text")
+    return meta | {"paragraphs": paragraphs}
 
 
 def photo_data_uri(path: Path | None) -> str | None:
@@ -111,12 +136,12 @@ def source_context(cv: dict, contact: dict, args: argparse.Namespace) -> dict | 
     }
 
 
-def render_html(cv: dict, contact: dict, photo: str | None, source: dict | None, template: Path) -> str:
+def render_html(template: Path, **ctx) -> str:
     env = Environment(
         loader=FileSystemLoader(template.parent),
         autoescape=select_autoescape(["html", "j2"]),
     )  # default Undefined: optional fields (url, desc, bullets, ...) may simply be left out
-    return env.get_template(template.name).render(cv=cv, contact=contact, photo=photo, source=source)
+    return env.get_template(template.name).render(**ctx)
 
 
 def print_pdf(html: str, out: Path) -> None:
@@ -161,16 +186,18 @@ def validate(pdf: Path, contact: dict, source: dict | None, allow_multipage: boo
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--cv", required=True, type=Path, help="CV content (cv.yml)")
+    doc = p.add_mutually_exclusive_group(required=True)
+    doc.add_argument("--cv", type=Path, help="CV content (cv.yml)")
+    doc.add_argument("--letter", type=Path, help="cover letter text (letter.md)")
     p.add_argument("--contact", required=True, type=Path, help="contact details (contact.yml)")
     p.add_argument("--photo", type=Path, help="portrait image; overrides `photo:` in contact.yml")
-    p.add_argument("--template", type=Path, default=ROOT / "templates" / "cv.html.j2")
+    p.add_argument("--template", type=Path, help="default: templates/cv.html.j2 or letter.html.j2")
     p.add_argument("--out", required=True, type=Path, help="output PDF path")
     p.add_argument("--html", action="store_true", help="also write the rendered HTML next to the PDF")
     p.add_argument("--allow-multipage", action="store_true")
     args = p.parse_args()
 
-    cv, contact = load_yaml(args.cv), load_yaml(args.contact)
+    contact = load_yaml(args.contact)
     for key in ("name", "email"):
         if not contact.get(key):
             sys.exit(f"error: {args.contact} is missing `{key}`")
@@ -179,9 +206,18 @@ def main() -> None:
     if photo_path is None and contact.get("photo"):
         photo_path = (args.contact.parent / contact["photo"]).resolve()  # relative to contact.yml
 
-    source = source_context(cv, contact, args)
-    html = render_html(cv, contact, photo_data_uri(photo_path), source, args.template)
+    photo = photo_data_uri(photo_path)
+    if args.cv:
+        args.template = args.template or ROOT / "templates" / "cv.html.j2"
+        cv = load_yaml(args.cv)
+        source = source_context(cv, contact, args)
+        html = render_html(args.template, cv=cv, contact=contact, photo=photo, source=source)
+    else:
+        args.template = args.template or ROOT / "templates" / "letter.html.j2"
+        source = None  # the "CV som kod" page belongs to the CV only
+        html = render_html(args.template, letter=load_letter(args.letter), contact=contact, photo=photo)
     if args.html:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.with_suffix(".html").write_text(html, encoding="utf-8")
     print_pdf(html, args.out)
 
